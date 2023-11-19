@@ -66,13 +66,52 @@ sudo systemctl enable crio --now
 
 echo "CRI runtime installed successfully"
 
-sudo apt-get update
-sudo apt-get install -y apt-transport-https ca-certificates curl
+
+
+# set proxy 
+
+# 1.set APT Configuration  
+cat >> /etc/apt/apt.conf << EOF
+Acquire::http::proxy "http://10.0.0.4:7890/";
+Acquire::https::proxy "http://10.0.0.4:7890/";
+EOF
+#echo "Acquire::http::proxy "http://10.0.0.4:7890/";" | sudo gedit /etc/apt/apt.conf
+#echo "Acquire::https::proxy "http://10.0.0.4:7890/";" | sudo tee -a /etc/apt/apt.conf
+
+# 2.set system Environment Variables (but no Effective immediately)
+echo "export HTTP_PROXY=http://10.0.0.4:7890" | sudo tee -a /etc/environment
+echo "export HTTPS_PROXY=http://10.0.0.4:7890" | sudo tee -a /etc/environment
+echo "export NO_PROXY=127.0.0.1,localhost,master-node,worker-node01,worker-node02,10.0.2.0/24,172.16.1.0/16,172.17.1.0/18" | sudo tee -a /etc/environment
+
+# 3.apply the changes(ps: did't Effective)
+source /etc/environment  
+
+# 4. set Environment Variables(Effective immediately,once)
+export HTTP_PROXY=http://10.0.0.4:7890
+export HTTPS_PROXY=http://10.0.0.4:7890
+export NO_PROXY=127.0.0.1,localhost,master-node,worker-node01,worker-node02,10.0.2.0/24,172.16.1.0/16,172.17.1.0/18
+
+echo "Proxy settings updated."
+
+
+sudo rm -rf /etc/apt/keyrings/kubernetes-archive-keyring.gpg
 curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
 
+
+
+sudo apt-get update -y
+sudo apt-get install -y apt-transport-https ca-certificates curl
+
+
+
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+
+
 sudo apt-get update -y
 sudo apt-get install -y kubelet="$KUBERNETES_VERSION" kubectl="$KUBERNETES_VERSION" kubeadm="$KUBERNETES_VERSION"
+#sudo apt-get install -y kubelet kubectl kubeadm
+
 sudo apt-get update -y
 sudo apt-get install -y jq
 

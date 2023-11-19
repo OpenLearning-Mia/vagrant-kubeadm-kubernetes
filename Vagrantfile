@@ -56,6 +56,15 @@ Vagrant.configure("2") do |config|
         "SERVICE_CIDR" => settings["network"]["service_cidr"]
       },
       path: "scripts/master.sh"
+
+      # install the dashboard
+    if settings["software"]["dashboard"] and settings["software"]["dashboard"] != ""
+      master.vm.provision "shell", 
+        env: {
+        "DASHBOARD_VERSION" => settings["software"]["dashboard"]
+        },
+      path: "scripts/dashboard.sh"
+    end
   end
 
   (1..NUM_WORKER_NODES).each do |i|
@@ -86,9 +95,9 @@ Vagrant.configure("2") do |config|
       node.vm.provision "shell", path: "scripts/node.sh"
 
       # Only install the dashboard after provisioning the last worker (and when enabled).
-      if i == NUM_WORKER_NODES and settings["software"]["dashboard"] and settings["software"]["dashboard"] != ""
-        node.vm.provision "shell", path: "scripts/dashboard.sh"
-      end
+      # if i == NUM_WORKER_NODES and settings["software"]["dashboard"] and settings["software"]["dashboard"] != ""
+      #   node.vm.provision "shell", path: "scripts/dashboard.sh"
+      # end
     end
 
   end
